@@ -1,0 +1,88 @@
+# ===== Python =====
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+*.egg
+*.egg-info/
+dist/
+build/
+.eggs/
+*.whl
+pip-wheel-metadata/
+htmlcov/
+.coverage
+.coverage.*
+.cache
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+.tox/
+.nox/
+.pyre/
+.pytype/
+
+# ===== Virtualenv =====
+.venv/
+venv/
+env/
+ENV/
+
+# ===== BookMind 运行时产物 =====
+# 用户数据 & 报告（建议不入仓，避免误提交用户文件）
+BookMind/
+.bookmind/
+*.bookmind/
+reports/
+output/
+exports/
+*.insight.json
+!examples/output_examples/*.insight.json
+
+# PDF 缓存
+*.pdf
+!docs/**/*.pdf
+!examples/**/*.pdf
+
+# 临时调试文件
+*.log
+*.tmp
+.tmp/
+scratch/
+debug/
+
+# ===== IDE =====
+.idea/
+.vscode/
+*.swp
+*.swo
+*~
+.DS_Store
+Thumbs.db
+
+# ===== OS =====
+.DS_Store
+.AppleDouble
+.LSOverride
+Icon?
+ehthumbs.db
+Desktop.ini
+
+# ===== Node / Frontend（未来扩展）=====
+node_modules/
+.next/
+.nuxt/
+.parcel-cache/
+.pnpm-store/
+
+# ===== Docker =====
+.dockerignore-dev
+
+# ===== Secrets（务必）=====
+.env
+.env.local
+.env.*.local
+*.pem
+*.key
+secrets/
