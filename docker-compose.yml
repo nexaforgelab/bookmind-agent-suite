@@ -1,0 +1,50 @@
+version: '3.8'
+
+services:
+  bookmind:
+    build: .
+    container_name: bookmind
+    volumes:
+      - ./data:/app/data
+      - ./output:/app/output
+      - ./exports:/app/exports
+      - ./examples:/app/examples:ro
+    environment:
+      - BOOKMIND_DATA_DIR=/app/data
+      - BOOKMIND_OUTPUT_DIR=/app/output
+      - BOOKMIND_LOG_LEVEL=INFO
+      # - OCR_LANGUAGE=chi_sim+eng
+    restart: unless-stopped
+    command: bookmind --help
+
+  # Run a specific analysis job
+  bookmind-analyze:
+    build: .
+    container_name: bookmind-analyze
+    volumes:
+      - ./data:/app/data
+      - ./output:/app/output
+      - ./exports:/app/exports
+    environment:
+      - BOOKMIND_LOG_LEVEL=DEBUG
+    profiles:
+      - analyze
+    command: bookmind analyze /app/data/book.pdf --depth deep
+
+  # Run QA mode (interactive)
+  bookmind-qa:
+    build: .
+    container_name: bookmind-qa
+    volumes:
+      - ./data:/app/data
+      - ./output:/app/output
+    stdin_open: true
+    tty: true
+    profiles:
+      - qa
+    command: bookmind ask /app/data/book.pdf
+
+volumes:
+  data:
+  output:
+  exports:
