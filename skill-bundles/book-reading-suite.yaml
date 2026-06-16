@@ -1,0 +1,50 @@
+name: book-reading-suite
+description: Full PDF book reading workflow with ingestion, OCR, structure detection, chapter summary, concept map, critical analysis, Q&A, notes, and exports.
+version: 1.0.0
+author: BookMind Authors
+skills:
+  - book-deep-reading
+  - book-pdf-ingest
+  - book-ocr-cleanup
+  - book-toc-detect
+  - book-chapter-summarize
+  - book-concept-map
+  - book-critical-analysis
+  - book-qa
+  - book-notes-export
+  - book-review-cards
+config:
+  - key: bookmind.output_dir
+    description: Directory for generated book reports
+    default: "~/BookMind/reports"
+  - key: bookmind.cache_dir
+    description: Directory for cache and parsed PDF data
+    default: "~/.bookmind/cache"
+  - key: bookmind.default_mode
+    description: Default reading mode
+    default: "deep"
+  - key: bookmind.default_goal
+    description: Default reader goal
+    default: "通识理解"
+  - key: bookmind.default_export
+    description: Default export formats
+    default: "markdown,html,json"
+instruction: |
+  You are running a full-book professional reading workflow.
+  Always preserve citations.
+  Always avoid copyright-unsafe long quotation.
+  Prefer structured outputs.
+  For large books, process chapter by chapter and save intermediate files.
+  The final answer to the user should include the main insight, generated report path, and suggested follow-up questions.
+tags:
+  - book
+  - pdf
+  - reading
+  - knowledge-management
+  - productivity
+platforms: [macos, linux]
+entrypoint: book-deep-reading
+examples:
+  - "/book-reading-suite /path/to/book.pdf --mode deep --goal 通识理解"
+  - "/book-reading-suite /path/to/book.pdf --mode expert --goal 投资研究 --export markdown,html,json,obsidian,anki"
+  - "/book-reading-suite 最近上传的PDF，帮我做专家级解读"
