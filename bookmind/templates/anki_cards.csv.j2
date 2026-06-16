@@ -1,0 +1,5 @@
+#separator:Comma
+#html:true
+#deck:{{ insight.metadata.title }}
+{% for card in insight.review_cards %}{{ card.front }},{{ card.back }},{{ card.card_type }}
+{% endfor %}

@@ -1,0 +1,27 @@
+---
+title: {{ insight.metadata.title }}
+author: {{ insight.metadata.author or '' }}
+tags: [book/bookmind]
+---
+
+# {{ insight.metadata.title }}
+
+## 核心论点
+{{ insight.core_thesis }}
+
+## 章节
+{% for ch in insight.chapter_insights %}
+- [[{{ ch.chapter_title }}]] — {{ ch.one_sentence_summary }}
+{% endfor %}
+
+## 概念
+{% for c in insight.concept_glossary %}
+- [[{{ c.name }}]]
+{% endfor %}
+
+## 引用
+{% for ch in insight.chapter_insights %}
+{% for c in ch.citations %}
+> {% if c.quote %}"{{ c.quote }}"{% endif %} — {{ c.label() }}
+{% endfor %}
+{% endfor %}
