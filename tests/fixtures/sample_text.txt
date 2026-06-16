@@ -1,0 +1,3 @@
+Sample fixture text used by tests.
+
+This file is intentionally short. Do not include real copyrighted book text.
