@@ -1,0 +1,26 @@
+# 《{{ insight.metadata.title }}》10 分钟速读
+
+> 作者：{{ insight.metadata.author or '佚名' }}
+
+## 1. 一句话核心
+{{ insight.core_thesis or '（待生成）' }}
+
+## 2. 三件事
+- {{ insight.chapter_insights[0].one_sentence_summary if insight.chapter_insights else '—' }}
+- {{ insight.chapter_insights[1].one_sentence_summary if insight.chapter_insights|length > 1 else '—' }}
+- {{ insight.chapter_insights[2].one_sentence_summary if insight.chapter_insights|length > 2 else '—' }}
+
+## 3. 这本书适合我吗？
+- 适合：希望系统了解该主题、愿意花 8–12 小时阅读的人。
+- 不适合：只想要一句话结论的读者。
+
+## 4. 5 个动作
+1. 读前言与目录
+2. 抓住作者核心主张
+3. 复述三个最有启发的观点
+4. 列出 1 个自己场景下的应用
+5. 把 1 张复习卡片加入 Anki
+
+## 5. 进一步阅读入口
+- 整本书深度解读报告：`./{{ insight.metadata.title }}.report.md`
+- 复习卡片：`./{{ insight.metadata.title }}.anki.csv`

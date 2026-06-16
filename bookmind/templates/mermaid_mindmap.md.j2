@@ -1,0 +1,7 @@
+```mermaid
+mindmap
+  root(({{ insight.metadata.title }}))
+{% for ch in insight.chapter_insights %}    {{ ch.chapter_title }}
+{% for kp in (ch.key_points or [])[:3] %}      {{ kp[:30] }}
+{% endfor %}{% endfor %}
+```
