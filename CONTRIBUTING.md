@@ -1,42 +1,59 @@
 # Contributing to BookMind
 
-首先，感谢你花时间为这个项目贡献代码！以下是贡献指南：
+感谢你考虑贡献 BookMind！🎉
 
-## Code of Conduct
+## 开发环境
 
-本项目采用 [Contributor Covenant](https://www.contributor-covenant.org/) 行为准则。
-
-## How to Contribute
-
-### Reporting Bugs
-- GitHub Issues 提交
-- 附上：复现步骤、环境、预期、日志
-
-### Suggesting Features
-- GitHub Issues 使用 "Feature Request" 模板
-- 说明使用场景和理由
-
-### Pull Requests
-1. Fork 本仓库并检出 main 分支
-2. 确保所有测试通过 (`pytest -xvs`)
-3. 运行质量检查：`ruff check` + `mypy` + `black .`
-4. 提交 PR 并描述你的改动
-
-## Dev Setup
+- Python ≥ 3.11
+- 推荐使用 [uv](https://github.com/astral-sh/uv) 或 venv
 
 ```bash
+git clone https://github.com/<your-org>/bookmind-agent-suite.git
 cd bookmind-agent-suite
-pip install -e "[dev,ocr,vector,export]"
-pytest
+python -m venv .venv
+source .venv/bin/activate
+pip install -e ".[dev,ocr,export,vector]"
 ```
 
-## Code Style
+## 跑测试
 
-- Python: PEP8 (via black/ruff)
-- 类型注解：完整 mypy 覆盖
-- 文档：中文注释 + 英文 docstring
-- 提交信息：conventional commits 格式
+```bash
+pytest -v
+python -m bookmind.cli doctor
+```
 
----
+## 提交规范
 
-欢迎任何形式的贡献 — PRs、Bug 报告、文档翻译、使用分享！
+我们用 [Conventional Commits](https://www.conventionalcommits.org/)：
+
+- `feat: 新增概念同义词合并`
+- `fix: 修复 review_agent 引用不存在的 citations 字段`
+- `docs: 更新 README 安装说明`
+- `refactor: 拆分 orchestrator`
+- `test: 增加 QA agent 测试`
+
+## Pull Request 流程
+
+1. Fork 本仓库
+2. 从 `main` 切新分支：`git checkout -b feat/your-feature`
+3. 写代码 + 写测试
+4. 跑 `pytest`，确保全部通过
+5. 跑 `ruff check .` 和 `mypy bookmind/`
+6. 提交 + 推送到你的 Fork
+7. 在 GitHub 上发起 Pull Request
+
+## 提 Issue 之前
+
+- 搜索是否已有相关 issue
+- 附上 `python -m bookmind.cli doctor` 输出
+- 附上**不含版权内容**的最小复现 PDF / 命令
+- 附上 Python 版本、操作系统、相关依赖版本
+
+## 安全
+
+如发现安全漏洞，请**不要**在公开 issue 中披露，邮件至：
+`security@bookmind.example.com`
+
+## License
+
+提交 PR 即代表你同意按 Apache 2.0 License 贡献你的代码。

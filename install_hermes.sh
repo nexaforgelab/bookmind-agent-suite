@@ -1,123 +1,102 @@
 #!/usr/bin/env bash
-# ============================================
-# BookMind Hermes Installation Script
-# 安装 BookMind 到 Hermes 环境
-# ============================================
+# install_hermes.sh - 在 Hermes 中安装 BookMind Skill Suite
+# 用法：bash install_hermes.sh
+set -euo pipefail
 
-set -e
-
-SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
-cd "$SCRIPT_DIR"
-
-# Colors
-RED='\033[0;31m'
 GREEN='\033[0;32m'
 YELLOW='\033[1;33m'
+CYAN='\033[0;36m'
+RED='\033[0;31m'
 NC='\033[0m'
 
-log_info() {
-    echo -e "${GREEN}[INFO]${NC} $1"
-}
+info()    { echo -e "${CYAN}[INFO]${NC}  $*"; }
+ok()      { echo -e "${GREEN}[ OK ]${NC}  $*"; }
+warn()    { echo -e "${YELLOW}[WARN]${NC}  $*"; }
+err()     { echo -e "${RED}[FAIL]${NC}  $*"; }
 
-log_warn() {
-    echo -e "${YELLOW}[WARN]${NC} $1"
-}
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+HERMES_HOME="${HERMES_HOME:-$HOME/.hermes}"
+SKILLS_DIR="$HERMES_HOME/skills"
+BUNDLES_DIR="$HERMES_HOME/skill-bundles"
+BOOKMIND_DIR="$HOME/.bookmind"
+WORKSPACE_DIR="$BOOKMIND_DIR/workspace"
+UPLOAD_DIR="$WORKSPACE_DIR/uploads"
+REPORT_DIR="$WORKSPACE_DIR/reports"
 
-log_error() {
-    echo -e "${RED}[ERROR]${NC} $1"
-}
+info "BookMind Hermes 安装器"
+info "  源目录: $SCRIPT_DIR"
+info "  目标:   $HERMES_HOME"
 
-# Detect Hermes installation path
-detect_hermes() {
-    local paths=("$HOME/.hermes" "/opt/hermes" "/usr/local/hermes")
-    
-    for path in "${paths[@]}"; do
-        if [ -d "$path" ]; then
-            echo "$path"
-            return 0
-        fi
-    done
-    
-    return 1
-}
+# ---------- 1. 检查 Python ----------
+if ! command -v python3 >/dev/null 2>&1; then
+  err "未找到 python3，请先安装 Python 3.11+"
+  exit 1
+fi
+PY_VERSION=$(python3 -c 'import sys; print("%d.%d" % (sys.version_info[:2]))')
+if ! python3 -c 'import sys; sys.exit(0 if sys.version_info >= (3,11) else 1)'; then
+  err "需要 Python 3.11+，当前 $PY_VERSION"
+  exit 1
+fi
+ok "Python $PY_VERSION"
 
-# Install skill definitions
-install_skills() {
-    local hermes_path="$1"
-    local skills_dir="$hermes_path/skills"
-    
-    log_info "Installing BookMind skills to Hermes..."
-    
-    mkdir -p "$skills_dir"
-    
-    # Copy skills with hermes-compatible structure
-    if [ -d "$SCRIPT_DIR/skills" ]; then
-        for skill_dir in "$SCRIPT_DIR/skills"/*/; do
-            skill_name=$(basename "$skill_dir")
-            target_dir="$skills_dir/$skill_name"
-            
-            mkdir -p "$target_dir"
-            cp "$skill_dir/SKILL.md" "$target_dir/" 2>/dev/null || true
-            cp -r "$skill_dir/scripts" "$target_dir/" 2>/dev/null || true
-            
-            log_info "  - Installed skill: $skill_name"
-        done
-    fi
-    
-    log_info "Skills installed to $skills_dir"
-}
+# ---------- 2. 目录 ----------
+info "创建 Hermes 目录结构..."
+mkdir -p "$SKILLS_DIR" "$BUNDLES_DIR" "$WORKSPACE_DIR" "$UPLOAD_DIR" "$REPORT_DIR"
+ok "目录已就绪"
 
-# Install Python package
-install_python_package() {
-    log_info "Installing bookmind Python package..."
-    pip install -e "$SCRIPT_DIR"
-}
+# ---------- 3. 复制 Skills ----------
+info "复制 BookMind Skills 到 $SKILLS_DIR ..."
+for skill_dir in "$SCRIPT_DIR"/skills/*/; do
+  skill_name="$(basename "$skill_dir")"
+  target="$SKILLS_DIR/$skill_name"
+  rm -rf "$target"
+  cp -R "$skill_dir" "$target"
+  ok "  ↳ 安装 $skill_name"
+done
 
-# Configure Hermes
-configure_hermes() {
-    local hermes_path="$1"
-    local config_file="$hermes_path/config/bookmind.json"
-    
-    log_info "Configuring Hermes integration..."
-    
-    mkdir -p "$(dirname "$config_file")"
-    
-    cat > "$config_file" << 'EOF'
-{
-    "enabled": true,
-    "skill_path": "${HERMES_PATH}/skills",
-    "default_timeout": 300,
-    "max_workers": 4
-}
+# ---------- 4. 复制 skill bundle ----------
+info "复制 skill bundle..."
+cp -f "$SCRIPT_DIR/skill-bundles/book-reading-suite.yaml" "$BUNDLES_DIR/"
+ok "  ↳ book-reading-suite.yaml"
+
+# ---------- 5. 安装 Python 包 ----------
+info "安装 bookmind Python 包..."
+cd "$SCRIPT_DIR"
+if [ ! -d ".venv" ]; then
+  python3 -m venv .venv
+fi
+# shellcheck source=/dev/null
+source .venv/bin/activate
+pip install --upgrade pip >/dev/null
+pip install -e ".[dev]" || warn "完整安装失败，尝试仅核心依赖"
+pip install -e . || err "安装 bookmind 包失败"
+ok "bookmind Python 包已安装"
+
+# ---------- 6. 生成使用说明 ----------
+cat <<EOF
+
+${GREEN}============================================${NC}
+${GREEN}  BookMind Hermes 安装完成 ${NC}
+${GREEN}============================================${NC}
+
+已安装 Skills:
+$(ls -1 "$SKILLS_DIR" | sed 's/^/  - /')
+
+Bundle: book-reading-suite
+
+调用方法:
+  hermes
+  /book-reading-suite /path/to/book.pdf --mode deep --goal 商业应用
+
+重新加载:
+  hermes bundles reload
+  hermes skills list
+
+工作区:
+  - $UPLOAD_DIR   放置 PDF
+  - $REPORT_DIR   报告输出
+
+卸载:
+  bash $SCRIPT_DIR/uninstall.sh
+
 EOF
-    
-    log_info "Configuration written to $config_file"
-}
-
-# Main
-main() {
-    log_info "BookMind Hermes Installation"
-    log_info "================================"
-    
-    local hermes_path=$(detect_hermes)
-    
-    if [ -z "$hermes_path" ]; then
-        log_error "Could not find Hermes installation"
-        log_info "Please install Hermes first or specify path manually"
-        log_info "Usage: HERMES_PATH=/path/to/hermes $0"
-        exit 1
-    fi
-    
-    log_info "Found Hermes at: $hermes_path"
-    
-    install_python_package
-    install_skills "$hermes_path"
-    configure_hermes "$hermes_path"
-    
-    log_info ""
-    log_info "Installation complete!"
-    log_info "You can now use BookMind skills in Hermes"
-    log_info "Try: hermes run book-deep-reading /path/to/book.pdf"
-}
-
-main "$@"

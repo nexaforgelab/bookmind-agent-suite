@@ -1,6 +1,11 @@
-"""BookMind Skills Runtime。"""
-from .registry import discover_skills, load_skill
-from .router import match_skill
-from .executor import execute_skill
+"""BookMind Skills Runtime。
 
-__all__ = ["discover_skills", "load_skill", "match_skill", "execute_skill"]
+负责：
+- 解析 OpenClaw / Hermes 调用上下文
+- 路由到具体 Skill
+- 收集并返回结果
+"""
+from .skill_context import SkillContext
+from .skill_router import SkillRouter
+
+__all__ = ["SkillContext", "SkillRouter"]

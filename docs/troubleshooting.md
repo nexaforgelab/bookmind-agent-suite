@@ -1,64 +1,64 @@
-# æéææ¥
+# 故障排查
 
-## 1. å®è£å¤±è´¥
+## 1. 安装失败
 
-- æ£æ¥ Python çæ¬ï¼`python --version` â¥ 3.11ã
-- æ£æ¥ `pip`ï¼`pip --version`ã
-- éè£ï¼`pip install -e .[dev]`ï¼æ¥ç tracebackã
+- 检查 Python 版本：`python --version` ≥ 3.11。
+- 检查 `pip`：`pip --version`。
+- 重装：`pip install -e .[dev]`，查看 traceback。
 
-## 2. è§£æå¤±è´¥
+## 2. 解析失败
 
-- `PDFParseError`ï¼ææ PDF è§£æåç«¯åå¤±è´¥ã
-  - å®è£ `pymupdf`ã`pypdf`ã`pdfplumber`ã
-  - æ£æ¥ PDF æ¯å¦å å¯ã
-  - å°è¯åç¨ `qpdf --decrypt input.pdf output.pdf` è§£å¯ã
-- è§£æå¾å° 0 å­ç¬¦ï¼
-  - PDF æ¯æ«æçãè¿è¡ `python -m bookmind.cli analyze ... --enable-ocr`ã
-  - å®è£ OCRï¼`pip install pytesseract ocrmypdf` + ç³»ç» tesseractã
+- `PDFParseError`：所有 PDF 解析后端均失败。
+  - 安装 `pymupdf`、`pypdf`、`pdfplumber`。
+  - 检查 PDF 是否加密。
+  - 尝试先用 `qpdf --decrypt input.pdf output.pdf` 解密。
+- 解析得到 0 字符：
+  - PDF 是扫描版。运行 `python -m bookmind.cli analyze ... --enable-ocr`。
+  - 安装 OCR：`pip install pytesseract ocrmypdf` + 系统 tesseract。
 
-## 3. ç®å½è¯å«å¤±è´¥
+## 3. 目录识别失败
 
-- è¾åº `toc_source=inferred` + `confidence=0.3`ï¼æªæ¾å°ä»»ä½ç« èæ é¢ã
-  - æ£æ¥ PDF æ¯å¦æ«æçã
-  - æ£æ¥ PDF åå é¡µæ¯å¦è¢« PDF éè¯»å¨å è¿"å°é¢"ã
+- 输出 `toc_source=inferred` + `confidence=0.3`：未找到任何章节标题。
+  - 检查 PDF 是否扫描版。
+  - 检查 PDF 前几页是否被 PDF 阅读器加过"封面"。
 
-## 4. ç´¢å¼å¤±è´¥
+## 4. 索引失败
 
-- `OperationalError: no such table: chunks_fts`ï¼
-  - éæ°è¿è¡ `book-deep-reading` è§¦å `pipeline.indexer.build_index`ã
-- ç´¢å¼æ¥è¯¢è¿åç©ºï¼
-  - æ£æ¥ query æ¯å¦åå«åç¨è¯ã
-  - æ¹åé®é¢ã
+- `OperationalError: no such table: chunks_fts`：
+  - 重新运行 `book-deep-reading` 触发 `pipeline.indexer.build_index`。
+- 索引查询返回空：
+  - 检查 query 是否包含停用词。
+  - 改写问题。
 
-## 5. å¯¼åºå¤±è´¥
+## 5. 导出失败
 
-- `weasyprint` æ¥éï¼ç¼ºç³»ç»åºã`apt install libcairo2 libpango-1.0-0`ã
-- HTML æ¸²æä¸ºå ä½ï¼ç¼º `markdown` åºã`pip install markdown`ã
+- `weasyprint` 报错：缺系统库。`apt install libcairo2 libpango-1.0-0`。
+- HTML 渲染为占位：缺 `markdown` 库。`pip install markdown`。
 
-## 6. è·¯å¾éè¯¯
+## 6. 路径错误
 
-- `SecurityError: è·¯å¾ä¸å¨ç½ååå`ï¼
-  - æ£æ¥ `.env` ä¸­ç `safe_path_roots`ã
-  - ç¨ `python -m bookmind.cli doctor` çå®ééç½®ã
+- `SecurityError: 路径不在白名单内`：
+  - 检查 `.env` 中的 `safe_path_roots`。
+  - 用 `python -m bookmind.cli doctor` 看实际配置。
 
-## 7. æ§è½
+## 7. 性能
 
-- 500 é¡µç PDF éå¸¸ 1â3 åéåºæ¥åï¼æ  LLM ä»å¥ï¼ã
-- å  LLM ä»å¥åï¼ç« èæè¦èæ¶æ¾èå¢å ï¼å»ºè®®å¼æ­¥ + æ¹éã
+- 500 页的 PDF 通常 1–3 分钟出报告（无 LLM 介入）。
+- 加 LLM 介入后，章节摘要耗时显著增加，建议异步 + 批量。
 
-## 8. ç¼å­æ¸ç
+## 8. 缓存清理
 
-- `python -m bookmind.cli clean-cache --yes`ã
+- `python -m bookmind.cli clean-cache --yes`。
 
-## 9. åçº§
+## 9. 升级
 
-- `pip install -U -e .[dev]`ã
-- å³æ³¨ SKILL.md `version` å­æ®µååã
+- `pip install -U -e .[dev]`。
+- 关注 SKILL.md `version` 字段变化。
 
-## 10. åé¦
+## 10. 反馈
 
-- æ issue è¯·éï¼
-  - `doctor` è¾åº
-  - æ¥é traceback
-  - PDF ç¹å¾ï¼é¡µæ°ãæ¯å¦æ«æãæ¯å¦å å¯ãæ¯å¦å¸¦ç®å½ï¼
-  - ä¸å«çæåå®¹çæå°å¤ç°å½ä»¤
+- 提 issue 请附：
+  - `doctor` 输出
+  - 报错 traceback
+  - PDF 特征（页数、是否扫描、是否加密、是否带目录）
+  - 不含版权内容的最小复现命令

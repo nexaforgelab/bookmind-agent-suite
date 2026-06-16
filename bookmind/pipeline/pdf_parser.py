@@ -1,4 +1,4 @@
-"""PDF 解析：优先 PyMuPDF，失败 fallback pypdf。"""
+"""PDF 解析：优先 PyMuPDF，失败 fallback pypdf / pdfplumber。"""
 from __future__ import annotations
 
 import re
@@ -19,16 +19,17 @@ _HEADING_HINT_RE_EN = re.compile(
     r"^(chapter|part|section|introduction|conclusion|appendix|references|preface|foreword)\b",
     re.IGNORECASE,
 )
+_NUMBERED_RE = re.compile(r"^(\d+(\.\d+)*)[\s.、]?(.+)?$")
 
 
 def _try_pymupdf(file_path: str) -> Optional[ParsedBook]:
     try:
-        import fitz
+        import fitz  # type: ignore
     except Exception:
         return None
     try:
         doc = fitz.open(file_path)
-    except Exception as e:
+    except Exception as e:  # noqa: BLE001
         log.warning("PyMuPDF 打开失败: {}", e)
         return None
 
@@ -41,17 +42,17 @@ def _try_pymupdf(file_path: str) -> Optional[ParsedBook]:
     full_text = ""
 
     try:
-        toc = doc.get_toc(simple=True)
+        toc = doc.get_toc(simple=True)  # list of [level, title, page]
         for level, t, p in toc:
             toc_raw.append({"level": int(level), "title": t, "page": int(p)})
-    except Exception as e:
+    except Exception as e:  # noqa: BLE001
         log.debug("PyMuPDF 读取 TOC 失败: {}", e)
 
     for idx, page in enumerate(doc):
         page_no = idx + 1
         try:
             text = page.get_text("text") or ""
-        except Exception:
+        except Exception:  # noqa: BLE001
             text = ""
         full_text += "\n" + text
 
@@ -69,36 +70,41 @@ def _try_pymupdf(file_path: str) -> Optional[ParsedBook]:
                         continue
                     sizes = [sp.get("size", 0) for sp in spans]
                     flags = [sp.get("flags", 0) for sp in spans]
-                    bold = any((f & 16) for f in flags)
-                    blocks.append({
-                        "text": line_text,
-                        "size_max": max(sizes) if sizes else 0,
-                        "bold": bool(bold),
-                        "bbox": blk.get("bbox"),
-                    })
+                    bold = any((f & 16) for f in flags)  # PyMuPDF bold flag
+                    blocks.append(
+                        {
+                            "text": line_text,
+                            "size_max": max(sizes) if sizes else 0,
+                            "bold": bool(bold),
+                            "bbox": blk.get("bbox"),
+                        }
+                    )
                     if max(sizes or [0]) >= 13 or bold or _HEADING_HINT_RE_ZH.match(line_text.strip()) or _HEADING_HINT_RE_EN.match(line_text.strip()):
                         if len(line_text.strip()) <= 80:
                             headings.append(line_text.strip())
-        except Exception as e:
+        except Exception as e:  # noqa: BLE001
             log.debug("解析 page dict 失败: page={} err={}", page_no, e)
 
         images_count = 0
         try:
             images_count = len(page.get_images(full=True) or [])
-        except Exception:
+        except Exception:  # noqa: BLE001
             pass
 
         char_density = len(text) / max(page.rect.height, 1.0)
-        pages.append(ParsedPage(
-            page_number=page_no,
-            text=text,
-            blocks=blocks,
-            headings=headings,
-            images_count=images_count,
-            tables_hint=False,
-            char_density=char_density,
-        ))
+        pages.append(
+            ParsedPage(
+                page_number=page_no,
+                text=text,
+                blocks=blocks,
+                headings=headings,
+                images_count=images_count,
+                tables_hint=False,
+                char_density=char_density,
+            )
+        )
 
+    # 判定 PDF 类型
     avg_density = sum(p.char_density for p in pages) / max(len(pages), 1)
     total_chars = sum(len(p.text) for p in pages)
     if total_chars < 200 and avg_density < 0.05:
@@ -137,12 +143,12 @@ def _try_pymupdf(file_path: str) -> Optional[ParsedBook]:
 
 def _try_pypdf(file_path: str) -> Optional[ParsedBook]:
     try:
-        from pypdf import PdfReader
+        from pypdf import PdfReader  # type: ignore
     except Exception:
         return None
     try:
         reader = PdfReader(file_path)
-    except Exception as e:
+    except Exception as e:  # noqa: BLE001
         log.warning("pypdf 打开失败: {}", e)
         return None
     pages: List[ParsedPage] = []
@@ -150,7 +156,7 @@ def _try_pypdf(file_path: str) -> Optional[ParsedBook]:
     for idx, page in enumerate(reader.pages):
         try:
             text = page.extract_text() or ""
-        except Exception:
+        except Exception:  # noqa: BLE001
             text = ""
         full_text += "\n" + text
         headings = []
@@ -159,15 +165,17 @@ def _try_pypdf(file_path: str) -> Optional[ParsedBook]:
             if _HEADING_HINT_RE_ZH.match(s) or _HEADING_HINT_RE_EN.match(s):
                 headings.append(s)
         char_density = len(text) / 800.0
-        pages.append(ParsedPage(
-            page_number=idx + 1,
-            text=clean_chinese_text(text) if detect_language(text) != "en" else clean_english_text(text),
-            blocks=[],
-            headings=headings,
-            images_count=0,
-            tables_hint=False,
-            char_density=char_density,
-        ))
+        pages.append(
+            ParsedPage(
+                page_number=idx + 1,
+                text=clean_chinese_text(text) if detect_language(text) != "en" else clean_english_text(text),
+                blocks=[],
+                headings=headings,
+                images_count=0,
+                tables_hint=False,
+                char_density=char_density,
+            )
+        )
     total_chars = sum(len(p.text) for p in pages)
     pdf_type = PDFType.SCANNED_PDF if total_chars < 200 else PDFType.TEXT_PDF
     md_obj = reader.metadata or {}
@@ -191,10 +199,13 @@ def _try_pypdf(file_path: str) -> Optional[ParsedBook]:
 
 
 def parse_pdf(file_path: str) -> ParsedBook:
+    """多后端尝试解析。"""
     log.info("开始解析 PDF: {}", file_path)
     parsed = _try_pymupdf(file_path)
     if parsed is not None:
-        log.info("PyMuPDF 解析完成: pages={}, type={}", len(parsed.pages), parsed.metadata.detected_type.value)
+        log.info(
+            "PyMuPDF 解析完成: pages={}, type={}", len(parsed.pages), parsed.metadata.detected_type.value
+        )
         return parsed
     parsed = _try_pypdf(file_path)
     if parsed is not None:

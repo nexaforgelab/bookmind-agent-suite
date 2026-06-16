@@ -31,9 +31,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Apache 2.0 License
 
 ### Notes
-- 默认走启发式摘要；要获得更深度分析，可在 `bookmind/agents/base_agent.py` 接入 LLM
+- 默认走启发式摘要；要获得更深度分析，可在 `bookmind/agents/` 下接入 LLM provider
+- 缓存目录：`~/.bookmind/cache`；报告目录：`~/BookMind/reports`
 
----
-
-This Changelog is kept in both English & Chinese.
-本文件使用双语记录变更。
+[Unreleased]: https://example.com/bookmind/compare/v1.0.0...HEAD
+[1.0.0]: https://example.com/bookmind/releases/tag/v1.0.0

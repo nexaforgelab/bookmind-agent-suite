@@ -1,46 +1,29 @@
-FROM python:3.11-slim-bookworm
+FROM python:3.11-slim
 
-LABEL maintainer="BookMind Team"
-LABEL description="BookMind Multi-Agent Reading Suite - Deep PDF book interpretation"
+ENV PYTHONUNBUFFERED=1 \
+    PYTHONDONTWRITEBYTECODE=1 \
+    PIP_NO_CACHE_DIR=1 \
+    PIP_DISABLE_PIP_VERSION_CHECK=1
 
-# Set working directory
 WORKDIR /app
 
-# Install system dependencies
-RUN apt-get update && apt-get install -y \
-    build-essential \
-    libpq-dev \
-    poppler-utils \
-    tesseract-ocr \
-    tesseract-ocr-chi-sim \
-    libgl1-mesa-glx \
-    libglib2.0-0 \
+# 系统依赖（OCR/PDF 渲染需要）
+RUN apt-get update && apt-get install -y --no-install-recommends \
+        build-essential \
+        tesseract-ocr tesseract-ocr-chi-sim tesseract-ocr-eng \
+        libmupdf-dev \
+        libcairo2 libpango-1.0-0 libpangocairo-1.0-0 libgdk-pixbuf-2.0-0 \
+        shared-mime-info \
     && rm -rf /var/lib/apt/lists/*
 
-# Copy requirements first for layer caching
-COPY requirements.txt .
+COPY requirements.txt ./
+RUN pip install -r requirements.txt
 
-# Install Python dependencies
-RUN pip install --no-cache-dir -r requirements.txt && \
-    pip install --no-cache-dir faiss-cpu pytesseract ocrmypdf
-
-# Copy application code
 COPY . .
-
-# Install bookmind package
 RUN pip install -e .
 
-# Create data directories
-RUN mkdir -p /app/data /app/output /app/exports
+VOLUME ["/app/data", "/app/reports"]
+WORKDIR /app
 
-# Set environment variables
-ENV PYTHONPATH=/app
-ENV PYTHONUNBUFFERED=1
-ENV BOOKMIND_DATA_DIR=/app/data
-ENV BOOKMIND_OUTPUT_DIR=/app/output
-
-# Expose port if needed (for future web interface)
-EXPOSE 8000
-
-# Default command
-CMD ["bookmind", "--help"]
+ENTRYPOINT ["python", "-m", "bookmind.cli"]
+CMD ["doctor"]

@@ -1,6 +1,6 @@
 # OpenClaw Usage Examples
 
-## å®è£
+## 安装
 
 ```bash
 git clone <repo> bookmind-agent-suite
@@ -8,23 +8,23 @@ cd bookmind-agent-suite
 ./install_openclaw.sh
 ```
 
-## è°ç¨
+## 调用
 
-### éè¿ slash command
+### 通过 slash command
 
 ```bash
-openclaw agent --message "/book-deep-reading /path/to/book.pdf --mode deep --goal éè¯çè§£"
+openclaw agent --message "/book-deep-reading /path/to/book.pdf --mode deep --goal 通识理解"
 ```
 
-### éè¿èªç¶è¯­è¨
+### 通过自然语言
 
 ```text
-/book-deep-reading æè¿ä¸ä¼ çPDFï¼å¸®æåä¸å®¶çº§è§£è¯»
+/book-deep-reading 最近上传的PDF，帮我做专家级解读
 ```
 
-### éè¿ per-agent workspace
+### 通过 per-agent workspace
 
-`book-reader` agent çæå°éç½®ï¼
+`book-reader` agent 的最小配置：
 
 ```yaml
 agents:
@@ -49,10 +49,10 @@ agents:
       - /proc
 ```
 
-## é£ä¹¦ / å¾®ä¿¡ / Telegram éæ
+## 飞书 / 微信 / Telegram 集成
 
 ```python
-# pseudo code - ç½å³æ¶å° PDF éä»¶åï¼
+# pseudo code - 网关收到 PDF 附件后：
 import shutil
 from pathlib import Path
 
@@ -60,18 +60,18 @@ uploads = Path("~/.openclaw/workspace-bookmind/uploads").expanduser()
 uploads.mkdir(parents=True, exist_ok=True)
 shutil.copy(attachment_path, uploads / attachment_name)
 
-# ç¶åè§¦åï¼
-# /book-deep-reading æè¿ä¸ä¼ çPDF --mode deep --goal éè¯çè§£
+# 然后触发：
+# /book-deep-reading 最近上传的PDF --mode deep --goal 通识理解
 ```
 
-## è¾åºæä»¶
+## 输出文件
 
 `~/.openclaw/workspace-bookmind/reports/`
 
-- `*.report.md` â ä¸»æ¥å
-- `*.report.html` â ç½é¡µç
-- `*.insight.json` â ç»æåæ°æ®
-- `*.mindmap.mmd` â Mermaid æç»´å¯¼å¾
-- `*.anki.csv` â Anki å¡ç
-- `*.evidence.csv` â è¯æ®è¡¨
-- `*.obsidian/` â Obsidian vault
+- `*.report.md` — 主报告
+- `*.report.html` — 网页版
+- `*.insight.json` — 结构化数据
+- `*.mindmap.mmd` — Mermaid 思维导图
+- `*.anki.csv` — Anki 卡片
+- `*.evidence.csv` — 证据表
+- `*.obsidian/` — Obsidian vault
